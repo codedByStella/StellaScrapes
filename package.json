@@ -1,0 +1,18 @@
+{
+  "name": "stellascrapes",
+  "version": "0.1.0",
+  "description": "Public-record data discovery and processing platform with Python and Node.js interfaces.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node test/test_router.js"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "express": "^4.18.3"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

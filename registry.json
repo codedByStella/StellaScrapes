@@ -1,0 +1,11 @@
+{
+  "_meta": {
+    "version": "2.3",
+    "description": "Public-release registry placeholder. Production source configurations have been withheld.",
+    "release_profile": "sanitized"
+  },
+  "cities": {},
+  "aliases": {},
+  "data_type_aliases": {},
+  "trade_keywords": {}
+}
