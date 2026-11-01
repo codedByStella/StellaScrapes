@@ -1,0 +1,326 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>StellaScrapes — Public Records Platform</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d1117;--surface:#161b22;--border:#30363d;--text:#c9d1d9;--muted:#8b949e;
+  --accent:#58a6ff;--good:#2ea043;--bad:#da3633;--warn:#d29922;
+  --radius:8px;--font:system-ui,'Segoe UI',sans-serif;--mono:'Cascadia Code','Fira Code',monospace}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}
+
+#app{max-width:1080px;margin:0 auto;padding:32px 24px 60px;display:flex;flex-direction:column;gap:22px}
+
+header{display:flex;align-items:baseline;gap:10px;border-bottom:1px solid var(--border);padding-bottom:16px;flex-wrap:wrap}
+header .logo{font-size:1.3rem;font-weight:700;color:#f0f6fc;letter-spacing:-.02em}
+header .logo span{color:var(--accent)}
+header .tag{font-size:.82rem;color:var(--muted)}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+
+.search-row{display:flex;gap:10px}
+#query{flex:1;background:#0d1117;border:1px solid var(--border);color:var(--text);
+  padding:12px 14px;border-radius:var(--radius);font-size:.95rem;font-family:var(--font)}
+#query:focus{outline:none;border-color:var(--accent)}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:var(--radius);
+  border:1px solid var(--border);background:#21262d;color:var(--text);cursor:pointer;
+  font-size:.9rem;font-family:var(--font);transition:.15s;white-space:nowrap}
+.btn:hover{background:#30363d;border-color:#58a6ff44}
+.btn.primary{background:#1158cc;border-color:var(--accent);color:#fff;font-weight:600}
+.btn.primary:hover{background:#1f6feb}
+.btn.primary:disabled{background:#21262d;border-color:var(--border);color:var(--muted);cursor:not-allowed}
+.btn.sm{padding:6px 12px;font-size:.8rem}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+.help{font-size:.78rem;color:var(--muted);margin-top:10px;line-height:1.6}
+.help b{color:var(--text)}
+
+.release-note{font-size:.82rem;color:var(--muted);line-height:1.6}
+.release-note strong{color:var(--text)}
+
+#status{font-size:.85rem;color:var(--muted);display:none;align-items:center;gap:8px}
+#status.show{display:flex}
+#status .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+#status.error .dot{background:var(--bad)}
+#status.error{color:var(--bad)}
+
+#error-box{display:none;background:#da363314;border:1px solid #da363355;border-radius:var(--radius);
+  padding:14px 16px;color:#ff8b87;font-size:.85rem;white-space:pre-wrap;line-height:1.6}
+#error-box.show{display:block}
+
+#results-card{display:none}
+#results-card.show{display:block}
+.results-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px}
+.results-header .count{font-size:.95rem;font-weight:600;color:#f0f6fc}
+.results-header .meta{font-size:.78rem;color:var(--muted)}
+.export-buttons{display:flex;gap:8px}
+
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius)}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th{background:#21262d;color:var(--muted);text-transform:uppercase;font-size:.68rem;letter-spacing:.05em;
+  text-align:left;padding:10px 12px;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0}
+td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#1c2128}
+td.truncate{max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+td.truncate:hover{white-space:normal;overflow:visible}
+.more-note{padding:12px;text-align:center;color:var(--muted);font-size:.8rem}
+
+.spinner{width:14px;height:14px;border:2px solid #ffffff44;border-top-color:#fff;border-radius:50%;
+  animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:600px){
+  #app{padding:20px 14px 40px}
+  .search-row{flex-direction:column}
+  .search-row .btn{justify-content:center}
+  header{align-items:flex-start;flex-direction:column;gap:5px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="logo">Stella<span>Scrapes</span></div>
+    <div class="tag">Public records discovery and processing platform</div>
+  </header>
+
+  <div class="card">
+    <div class="release-note">
+      <strong>MVP — Active Development</strong>
+      <p>
+        This public release demonstrates the browser interface and
+        application structure. Production search and data-retrieval
+        functionality has been withheld from this release.
+      </p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="search-row">
+      <input id="query" type="text"
+        placeholder="Enter a search query"
+        autocomplete="off">
+      <button class="btn primary" id="search-btn">Search</button>
+    </div>
+    <div class="help">
+      The public interface preserves the search workflow.
+      Live search is unavailable in this release.
+    </div>
+  </div>
+
+  <div id="status">
+    <span class="dot"></span>
+    <span id="status-text"></span>
+  </div>
+
+  <div id="error-box"></div>
+
+  <div class="card" id="results-card">
+    <div class="results-header">
+      <div>
+        <div class="count" id="result-count"></div>
+        <div class="meta" id="result-meta"></div>
+      </div>
+      <div class="export-buttons">
+        <button class="btn sm" id="export-csv" disabled>Export CSV</button>
+        <button class="btn sm" id="export-xlsx" disabled>Export Excel</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr id="table-head"></tr></thead>
+        <tbody id="table-body"></tbody>
+      </table>
+      <div class="more-note" id="more-note" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const COLUMN_LABELS = {
+  date: 'Date',
+  address: 'Address',
+  city: 'City',
+  record_type: 'Type',
+  description: 'Description',
+  contractor: 'Contractor',
+  name: 'Name',
+  status: 'Status',
+  url: 'URL',
+};
+
+const TRUNCATE_COLUMNS = new Set(['description', 'url']);
+const MAX_ROWS_SHOWN = 200;
+
+const $ = sel => document.querySelector(sel);
+
+const queryInput = $('#query');
+const searchBtn = $('#search-btn');
+const statusEl = $('#status');
+const statusText = $('#status-text');
+const errorBox = $('#error-box');
+const resultsCard = $('#results-card');
+const resultCount = $('#result-count');
+const resultMeta = $('#result-meta');
+const tableHead = $('#table-head');
+const tableBody = $('#table-body');
+const moreNote = $('#more-note');
+const exportCsvBtn = $('#export-csv');
+const exportXlsxBtn = $('#export-xlsx');
+
+let lastQuery = '';
+
+function setStatus(text, isError) {
+  statusEl.classList.toggle('show', !!text);
+  statusEl.classList.toggle('error', !!isError);
+  statusText.textContent = text || '';
+}
+
+function setError(message) {
+  if (!message) {
+    errorBox.classList.remove('show');
+    errorBox.textContent = '';
+    return;
+  }
+
+  errorBox.classList.add('show');
+  errorBox.textContent = message;
+}
+
+function renderTable(records, columns) {
+  tableHead.innerHTML = columns
+    .map(c => `<th>${COLUMN_LABELS[c] || escapeHtml(c)}</th>`)
+    .join('');
+
+  const shown = records.slice(0, MAX_ROWS_SHOWN);
+
+  tableBody.innerHTML = shown.map(r => {
+    const cells = columns.map(c => {
+      const val = r[c] ?? '';
+      const cls = TRUNCATE_COLUMNS.has(c) ? ' class="truncate"' : '';
+
+      if (c === 'url' && val) {
+        let parsedUrl;
+
+        try {
+          parsedUrl = new URL(String(val));
+        } catch {
+          return `<td${cls}>${escapeHtml(val)}</td>`;
+        }
+
+        if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+          return `<td${cls}>${escapeHtml(val)}</td>`;
+        }
+
+        return `<td${cls}><a href="${escapeAttr(parsedUrl.href)}" target="_blank" rel="noopener noreferrer">link</a></td>`;
+      }
+
+      return `<td${cls}>${escapeHtml(val)}</td>`;
+    }).join('');
+
+    return `<tr>${cells}</tr>`;
+  }).join('');
+
+  if (records.length > MAX_ROWS_SHOWN) {
+    moreNote.style.display = 'block';
+    moreNote.textContent =
+      `Showing first ${MAX_ROWS_SHOWN} of ${records.length} records.`;
+  } else {
+    moreNote.style.display = 'none';
+  }
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[c]));
+}
+
+function escapeAttr(s) {
+  return escapeHtml(s);
+}
+
+async function runSearch() {
+  const q = queryInput.value.trim();
+  if (!q) return;
+
+  lastQuery = q;
+
+  searchBtn.disabled = true;
+  searchBtn.innerHTML = '<span class="spinner"></span> Searching';
+
+  setError(null);
+  resultsCard.classList.remove('show');
+  setStatus('Searching…', false);
+
+  try {
+    const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+    const body = await res.json();
+
+    if (!res.ok || body.error) {
+      setStatus('Search unavailable', true);
+      setError(body.error || 'The search request could not be completed.');
+      return;
+    }
+
+    setStatus('', false);
+
+    const fuzzyNote =
+      body.query && body.query._fuzzy_match
+        ? ` (matched ${body.query._fuzzy_match})`
+        : '';
+
+    resultCount.textContent =
+      `${body.count.toLocaleString()} record${body.count === 1 ? '' : 's'}`;
+
+    resultMeta.textContent =
+      `${body.city} · ${body.data_type}` +
+      `${body.trade ? ' / ' + body.trade : ''}` +
+      ` · last ${body.days} days${fuzzyNote}`;
+
+    renderTable(body.records, body.columns);
+    resultsCard.classList.add('show');
+
+    const hasResults = body.count > 0;
+    exportCsvBtn.disabled = !hasResults;
+    exportXlsxBtn.disabled = !hasResults;
+
+  } catch (e) {
+    setStatus('Request failed', true);
+    setError('Could not reach the server. Check that the local application is running and try again.');
+  } finally {
+    searchBtn.disabled = false;
+    searchBtn.textContent = 'Search';
+  }
+}
+
+function triggerExport(format) {
+  if (!lastQuery) return;
+
+  const url =
+    `/api/export?q=${encodeURIComponent(lastQuery)}&format=${format}`;
+
+  window.location.href = url;
+}
+
+searchBtn.addEventListener('click', runSearch);
+
+queryInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') runSearch();
+});
+
+exportCsvBtn.addEventListener('click', () => triggerExport('csv'));
+exportXlsxBtn.addEventListener('click', () => triggerExport('xlsx'));
+
+queryInput.focus();
+</script>
+</body>
+</html>
